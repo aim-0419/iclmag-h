@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
@@ -9,7 +9,7 @@ import { useSearchParams } from "next/navigation";
 // 이메일 + 비밀번호로 로그인 처리
 // ====================================
 
-export default function LoginPage() {
+function LoginForm() {
   const searchParams = useSearchParams();
 
   // 폼 상태 관리
@@ -55,8 +55,6 @@ export default function LoginPage() {
       }
 
       // 로그인 성공 → 홈으로 강제 이동 (하드 리로드)
-      // router.push()는 소프트 네비게이션이라 헤더의 useEffect가 재실행 안 됨
-      // window.location.href 사용 시 전체 페이지가 새로 로드되어 로그인 상태 반영됨
       window.location.href = "/";
     } catch {
       setError("서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
@@ -155,5 +153,13 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-surface flex items-center justify-center" />}>
+      <LoginForm />
+    </Suspense>
   );
 }
