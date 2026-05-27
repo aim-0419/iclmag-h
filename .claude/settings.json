@@ -6,7 +6,10 @@
       "Bash(powershell -Command \"\\(Get-Content 'src/app/policy/[type]/page.tsx' -Raw\\) -replace '정지윤', '최운창' -replace '061-392-9782', '062-671-8650' -replace 'jjy@aimcoltd\\\\.com', 'ceo@aimcoltd.com' | Set-Content 'src/app/policy/[type]/page.tsx' -Encoding UTF8\")",
       "Bash(powershell -Command \"\\(Get-Content 'src/frontend/components/layout/Footer.tsx' -Raw\\) -replace '정지윤', '최운창' -replace '061-392-9782', '062-671-8650' -replace 'jjy@aimcoltd\\\\.com', 'ceo@aimcoltd.com' | Set-Content 'src/frontend/components/layout/Footer.tsx' -Encoding UTF8\")",
       "PowerShell(Get-Process -Name \"node\" -ErrorAction SilentlyContinue)",
-      "PowerShell(Stop-Process -Name \"node\" -Force -ErrorAction SilentlyContinue)"
+      "PowerShell(Stop-Process -Name \"node\" -Force -ErrorAction SilentlyContinue)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(git add *)"
     ]
   }
 }
