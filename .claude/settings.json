@@ -9,7 +9,11 @@
       "PowerShell(Stop-Process -Name \"node\" -Force -ErrorAction SilentlyContinue)",
       "Bash(git commit *)",
       "Bash(git push *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Read(//c/Users/eldorado/.ssh/**)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\eldorado\\.ssh"
     ]
   }
 }
