@@ -56,6 +56,8 @@ model User {
   articles      Article[]
   // 이메일 인증 토큰들
   verificationTokens VerificationToken[]
+  // 비밀번호 재설정 토큰들
+  passwordResetTokens PasswordResetToken[]
 
   @@map("users")
 }
@@ -73,6 +75,20 @@ model VerificationToken {
   createdAt DateTime @default(now())
 
   @@map("verification_tokens")
+}
+
+// ====================================
+// 비밀번호 재설정 토큰 테이블
+// ====================================
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique            // 랜덤 UUID 토큰
+  userId    Int                         // 대상 사용자
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime                    // 만료 시각 (발급 후 30분)
+  createdAt DateTime @default(now())
+
+  @@map("password_reset_tokens")
 }
 
 // ====================================

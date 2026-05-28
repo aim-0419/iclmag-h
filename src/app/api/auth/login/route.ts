@@ -67,9 +67,11 @@ export async function POST(request: NextRequest) {
     });
 
     // JWT를 httpOnly 쿠키에 저장 (XSS 공격 방어)
+    // secure: HTTPS가 적용된 경우에만 true (도메인 연결 후 true로 변경)
+    const isHttps = process.env.NEXT_PUBLIC_APP_URL?.startsWith("https");
     response.cookies.set("auth_token", token, {
       httpOnly: true,       // JavaScript에서 접근 불가
-      secure: process.env.NODE_ENV === "production",  // HTTPS에서만 전송
+      secure: isHttps,      // HTTPS 환경에서만 true
       sameSite: "lax",      // CSRF 방어
       maxAge: 60 * 60 * 24 * 7, // 7일
       path: "/",

@@ -4,6 +4,7 @@ import { CATEGORY_LABELS, CATEGORY_COLORS } from "@/types";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import ContentProtection from "@/frontend/components/article/ContentProtection";
 
 // ====================================
 // 기사 상세 페이지
@@ -63,6 +64,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   const categoryColor = CATEGORY_COLORS[article.category];
 
   return (
+    <ContentProtection>
     <div className="max-w-4xl mx-auto px-4 py-10">
       {/* 카테고리 빵부스러기 */}
       <nav className="flex items-center gap-2 text-sm text-gray-400 mb-6">
@@ -146,5 +148,6 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         </div>
       </div>
     </div>
+    </ContentProtection>
   );
 }
