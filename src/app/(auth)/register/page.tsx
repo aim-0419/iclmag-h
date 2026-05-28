@@ -184,7 +184,7 @@ export default function RegisterPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-1">
             <span className="text-accent font-black text-3xl">ICL</span>
-            <span className="font-light text-2xl text-gray-700">MAG</span>
+            <span className="font-light text-2xl text-gray-700">MAG-H</span>
           </Link>
           <p className="text-gray-500 text-sm mt-2">
             {step === 1 ? "새 계정을 만들어보세요" : "이메일로 발송된 인증 코드를 입력하세요"}

@@ -11,15 +11,15 @@ import Footer from "@/frontend/components/layout/Footer";
 
 export const metadata: Metadata = {
   title: {
-    default: "ICLMAG - 빠르고 정확한 뉴스",
-    template: "%s | ICLMAG",
+    default: "ICL MAG-H - 빠르고 정확한 뉴스",
+    template: "%s | ICL MAG-H",
   },
   description: "정치, 경제, 사회, 생활/문화, IT/과학, 세계 뉴스를 빠르고 정확하게 전달합니다.",
   keywords: ["뉴스", "매거진", "정치", "경제", "사회", "IT", "세계"],
   openGraph: {
     type: "website",
     locale: "ko_KR",
-    siteName: "ICLMAG",
+    siteName: "ICL MAG-H",
   },
 };
 

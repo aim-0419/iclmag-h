@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   const categoryLabel = CATEGORY_LABELS[category];
   return {
     title: `${categoryLabel} 뉴스`,
-    description: `ICLMAG의 ${categoryLabel} 분야 최신 뉴스와 기사를 확인하세요.`,
+    description: `ICL MAG-H의 ${categoryLabel} 분야 최신 뉴스와 기사를 확인하세요.`,
   };
 }
 

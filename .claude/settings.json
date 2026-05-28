@@ -10,7 +10,8 @@
       "Bash(git commit *)",
       "Bash(git push *)",
       "Bash(git add *)",
-      "Read(//c/Users/eldorado/.ssh/**)"
+      "Read(//c/Users/eldorado/.ssh/**)",
+      "Bash(mysql -u root -p'aim64016401!' iclmag -e \"DELETE FROM verification_tokens; DELETE FROM users;\")"
     ],
     "additionalDirectories": [
       "C:\\Users\\eldorado\\.ssh"

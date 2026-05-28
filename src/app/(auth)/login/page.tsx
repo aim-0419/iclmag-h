@@ -238,7 +238,7 @@ function LoginForm() {
           <div className="text-center mb-8">
             <Link href="/" className="inline-flex items-center gap-1">
               <span className="text-accent font-black text-3xl">ICL</span>
-              <span className="font-light text-2xl text-gray-700">MAG</span>
+              <span className="font-light text-2xl text-gray-700">MAG-H</span>
             </Link>
             <p className="text-gray-500 text-sm mt-2">계속하려면 로그인하세요</p>
           </div>

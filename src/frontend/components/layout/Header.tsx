@@ -71,7 +71,7 @@ export default function Header() {
               ICL
             </span>
             <span className="font-light text-xl tracking-widest text-gray-300">
-              MAG
+              MAG-H
             </span>
           </Link>
 
