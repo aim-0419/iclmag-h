@@ -261,15 +261,15 @@ function LoginForm() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">이메일</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">아이디 또는 이메일</label>
                 <input
-                  type="email"
+                  type="text"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="이메일을 입력하세요"
+                  placeholder="아이디 또는 이메일을 입력하세요"
                   required
                   className="input-field"
-                  autoComplete="email"
+                  autoComplete="username"
                 />
               </div>
 

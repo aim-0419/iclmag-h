@@ -90,8 +90,11 @@ export async function createUser(email: string, password: string, name: string) 
  * @returns 사용자 정보(emailVerified 포함) 또는 null (로그인 실패)
  */
 export async function validateLogin(email: string, password: string) {
-  // 이메일로 사용자 조회
-  const user = await findUserByEmail(email);
+  // 이메일 또는 이름으로 사용자 조회
+  let user = await findUserByEmail(email);
+  if (!user) {
+    user = await prisma.user.findFirst({ where: { name: email } });
+  }
   if (!user) return null;
 
   // 입력한 비밀번호와 해시된 비밀번호 비교
