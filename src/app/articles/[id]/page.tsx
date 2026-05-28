@@ -5,6 +5,9 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import ContentProtection from "@/frontend/components/article/ContentProtection";
+import DeleteArticleButton from "@/frontend/components/article/DeleteArticleButton";
+import { requireAuth } from "@/backend/middleware/auth";
+import { cookies } from "next/headers";
 
 // ====================================
 // 기사 상세 페이지
@@ -59,6 +62,19 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   if (!article || article.status === "DRAFT") {
     notFound();
   }
+
+  // 현재 로그인한 사용자 확인 (삭제 버튼 표시 여부)
+  const cookieStore = await cookies();
+  const token = cookieStore.get("auth_token")?.value;
+  let currentUser: { userId: number; role: string } | null = null;
+  if (token) {
+    const { verifyToken } = await import("@/backend/lib/jwt");
+    try { currentUser = await verifyToken(token) as any; } catch {}
+  }
+  const canDelete = currentUser && (
+    currentUser.role === "ADMIN" ||
+    currentUser.userId === article.author.id
+  );
 
   const categoryLabel = CATEGORY_LABELS[article.category];
   const categoryColor = CATEGORY_COLORS[article.category];
@@ -139,12 +155,15 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           >
             ← 목록으로 돌아가기
           </Link>
-          <Link
-            href={`/category/${article.category.toLowerCase()}`}
-            className={`text-xs font-bold px-3 py-1 rounded-full ${categoryColor}`}
-          >
-            {categoryLabel} 더보기
-          </Link>
+          <div className="flex items-center gap-4">
+            {canDelete && <DeleteArticleButton articleId={article.id} />}
+            <Link
+              href={`/category/${article.category.toLowerCase()}`}
+              className={`text-xs font-bold px-3 py-1 rounded-full ${categoryColor}`}
+            >
+              {categoryLabel} 더보기
+            </Link>
+          </div>
         </div>
       </div>
     </div>
