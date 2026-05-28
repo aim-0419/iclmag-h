@@ -112,12 +112,7 @@ export default function Header() {
                 >
                   로그인
                 </Link>
-                <Link
-                  href="/register"
-                  className="bg-accent hover:bg-accent-hover text-white text-sm font-medium px-4 py-2 rounded transition-colors"
-                >
-                  회원가입
-                </Link>
+                {/* 회원가입 비활성화 */}
               </div>
             )}
 
@@ -199,9 +194,7 @@ export default function Header() {
               <Link href="/login" className="text-gray-300 text-sm" onClick={() => setIsMenuOpen(false)}>
                 로그인
               </Link>
-              <Link href="/register" className="text-accent text-sm" onClick={() => setIsMenuOpen(false)}>
-                회원가입
-              </Link>
+              {/* 회원가입 비활성화 */}
             </div>
           )}
         </div>

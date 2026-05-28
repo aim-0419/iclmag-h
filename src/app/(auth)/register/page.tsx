@@ -1,8 +1,18 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+
+// 회원가입 비활성화 - 직접 접근 시 로그인으로 리다이렉트
+export default function RegisterPage() {
+  const router = useRouter();
+  useEffect(() => { router.replace("/login"); }, [router]);
+  return null;
+}
+
+/* 원본 코드 비활성화
 import { useState, useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 // ====================================
 // 회원가입 페이지
@@ -328,3 +338,4 @@ export default function RegisterPage() {
     </div>
   );
 }
+*/
