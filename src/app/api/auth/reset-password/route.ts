@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/backend/lib/prisma";
+import { prisma } from "@/backend/lib/db";
 import { verifyPasswordResetToken, deletePasswordResetToken } from "@/backend/services/passwordResetService";
 import bcrypt from "bcryptjs";
 

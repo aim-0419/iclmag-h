@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/backend/lib/prisma";
+import { prisma } from "@/backend/lib/db";
 
 // ====================================
 // 아이디(이메일) 찾기 API

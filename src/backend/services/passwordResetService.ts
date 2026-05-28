@@ -1,4 +1,4 @@
-import { prisma } from "@/backend/lib/prisma";
+import { prisma } from "@/backend/lib/db";
 import { randomBytes } from "crypto";
 
 // ====================================
