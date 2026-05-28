@@ -7,7 +7,7 @@ import Link from "next/link";
 // 최신 기사 목록을 Featured + 그리드 형태로 표시
 // ====================================
 
-export const revalidate = 60; // 60초마다 페이지 재검증 (ISR)
+export const revalidate = 5; // 5초마다 페이지 재검증 (ISR)
 
 export default async function HomePage() {
   // 최신 기사 5개 + 전체 목록 동시 로딩
