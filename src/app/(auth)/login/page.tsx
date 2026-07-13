@@ -312,7 +312,12 @@ function LoginForm() {
               </button>
             </div>
 
-            {/* 회원가입 비활성화 */}
+            <div className="text-center mt-5 text-sm text-gray-500">
+              아직 계정이 없으신가요?{" "}
+              <Link href="/register" className="text-accent hover:underline">
+                회원가입
+              </Link>
+            </div>
           </div>
 
           <p className="text-center mt-4">

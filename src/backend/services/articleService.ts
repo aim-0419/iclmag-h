@@ -138,7 +138,7 @@ export async function createArticle(
 
 /**
  * 기사 수정
- * 본인 기사 또는 관리자만 수정 가능
+ * 권한 확인은 API 라우트에서 수행
  *
  * @param id - 기사 ID
  * @param data - 수정할 데이터
@@ -163,7 +163,7 @@ export async function updateArticle(
 
 /**
  * 기사 삭제
- * 본인 기사 또는 관리자만 삭제 가능
+ * 권한 확인은 API 라우트에서 수행
  *
  * @param id - 기사 ID
  */
@@ -171,23 +171,6 @@ export async function deleteArticle(id: number) {
   return prisma.article.delete({
     where: { id },
   });
-}
-
-/**
- * 기사 작성자 확인
- * 수정/삭제 전 권한 확인에 사용
- *
- * @param articleId - 기사 ID
- * @param userId - 현재 사용자 ID
- * @returns 작성자면 true
- */
-export async function isArticleAuthor(articleId: number, userId: number): Promise<boolean> {
-  const article = await prisma.article.findUnique({
-    where: { id: articleId },
-    select: { authorId: true },
-  });
-
-  return article?.authorId === userId;
 }
 
 /**

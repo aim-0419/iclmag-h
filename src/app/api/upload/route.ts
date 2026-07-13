@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/backend/middleware/auth";
+import { isAdmin, requireAuth } from "@/backend/middleware/auth";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 
 // ====================================
 // 이미지 업로드 API
 // POST /api/upload
-// 로그인한 사용자만 업로드 가능
+// 관리자만 업로드 가능
 // 업로드된 이미지는 /public/uploads/ 에 저장
 // ====================================
 
@@ -29,6 +29,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, message: "로그인이 필요합니다." },
         { status: 401 }
+      );
+    }
+
+    // 기사 작성에 필요한 이미지 업로드는 관리자만 가능
+    if (!isAdmin(user)) {
+      return NextResponse.json(
+        { success: false, message: "이미지 업로드 권한이 없습니다." },
+        { status: 403 }
       );
     }
 

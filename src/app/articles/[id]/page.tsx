@@ -6,7 +6,8 @@ import Image from "next/image";
 import Link from "next/link";
 import ContentProtection from "@/frontend/components/article/ContentProtection";
 import DeleteArticleButton from "@/frontend/components/article/DeleteArticleButton";
-import { requireAuth } from "@/backend/middleware/auth";
+import { verifyToken } from "@/backend/lib/jwt";
+import { findUserById } from "@/backend/services/userService";
 import { cookies } from "next/headers";
 
 // ====================================
@@ -63,18 +64,17 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     notFound();
   }
 
-  // 현재 로그인한 사용자 확인 (삭제 버튼 표시 여부)
+  // 현재 로그인한 사용자 확인 (삭제 버튼 표시 여부: DB 최신 role 기준 ADMIN만)
   const cookieStore = await cookies();
   const token = cookieStore.get("auth_token")?.value;
-  let currentUser: { userId: number; role: string } | null = null;
+  let canDelete = false;
   if (token) {
-    const { verifyToken } = await import("@/backend/lib/jwt");
-    try { currentUser = await verifyToken(token) as any; } catch {}
+    const tokenUser = await verifyToken(token);
+    if (tokenUser) {
+      const currentUser = await findUserById(tokenUser.userId);
+      canDelete = currentUser?.role === "ADMIN";
+    }
   }
-  const canDelete = currentUser && (
-    currentUser.role === "ADMIN" ||
-    currentUser.userId === article.author.id
-  );
 
   const categoryLabel = CATEGORY_LABELS[article.category];
   const categoryColor = CATEGORY_COLORS[article.category];

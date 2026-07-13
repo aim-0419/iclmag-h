@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import prisma from "@/backend/lib/db";
+import { Role } from "@prisma/client";
 
 // ====================================
 // 사용자 관련 비즈니스 로직
@@ -67,6 +68,7 @@ export async function createUser(email: string, password: string, name: string) 
       email,
       password: hashedPassword,
       name,
+      role: Role.USER,
     },
     select: {
       id: true,

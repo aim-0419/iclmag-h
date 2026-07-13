@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 // ====================================
 // 기사 삭제 버튼 컴포넌트
-// 작성자 또는 관리자만 표시
+// 관리자만 표시
 // ====================================
 
 export default function DeleteArticleButton({ articleId }: { articleId: number }) {

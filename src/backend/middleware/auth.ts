@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { verifyToken, JWTPayload } from "@/backend/lib/jwt";
+import prisma from "@/backend/lib/db";
 
 // ====================================
 // 인증 미들웨어
@@ -25,8 +26,34 @@ export async function getAuthUser(request: NextRequest): Promise<JWTPayload | nu
 
   if (!token) return null;
 
-  // 토큰 검증 후 사용자 정보 반환
-  return await verifyToken(token);
+  // 토큰 검증
+  const tokenUser = await verifyToken(token);
+  if (!tokenUser) return null;
+
+  // 권한은 JWT에 저장된 오래된 role만 믿지 않고 DB의 최신 값을 사용
+  try {
+    const dbUser = await prisma.user.findUnique({
+      where: { id: tokenUser.userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+      },
+    });
+
+    if (!dbUser) return null;
+
+    return {
+      userId: dbUser.id,
+      email: dbUser.email,
+      name: dbUser.name,
+      role: dbUser.role,
+    };
+  } catch (error) {
+    console.error("[인증 사용자 조회 오류]", error);
+    return null;
+  }
 }
 
 /**
@@ -42,14 +69,14 @@ export async function requireAuth(request: NextRequest): Promise<JWTPayload | nu
 }
 
 /**
- * 관리자 또는 작성자 권한 확인
- * 일반 사용자는 기사 작성 불가
+ * 관리자 권한 확인
+ * 기사 작성은 관리자만 가능
  *
  * @param user - JWT 페이로드의 사용자 정보
  * @returns 권한 있으면 true
  */
 export function hasWritePermission(user: JWTPayload): boolean {
-  return user.role === "ADMIN" || user.role === "WRITER";
+  return user.role === "ADMIN";
 }
 
 /**
