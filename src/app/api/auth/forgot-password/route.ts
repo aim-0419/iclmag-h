@@ -1,46 +1,36 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { findUserByEmail } from "@/backend/services/userService";
 import { createPasswordResetToken } from "@/backend/services/passwordResetService";
 import { sendPasswordResetEmail } from "@/backend/lib/email";
+import { fail, ok, serverError } from "@/backend/lib/apiResponse";
 
-// ====================================
-// 비밀번호 재설정 요청 API
-// POST /api/auth/forgot-password
-// ====================================
+// ============================================================
+// 비밀번호 재설정 요청 API   POST /api/auth/forgot-password
+//
+// [비개발자 설명]
+// 로그인 화면의 "비밀번호 찾기"에서 이메일을 넣으면 실행됩니다.
+// 30분간만 쓸 수 있는 재설정 링크를 메일로 보냅니다.
+//
+// 가입되지 않은 이메일을 넣어도 "발송했습니다"라고 답합니다.
+// (가입 여부를 외부에서 알아내지 못하게 하기 위함)
+// ============================================================
 
 export async function POST(request: NextRequest) {
   try {
     const { email } = await request.json();
+    if (!email) return fail("이메일을 입력해주세요.");
 
-    if (!email) {
-      return NextResponse.json(
-        { success: false, message: "이메일을 입력해주세요." },
-        { status: 400 }
-      );
-    }
+    const user = await findUserByEmail(email.trim());
 
-    const user = await findUserByEmail(email);
-
-    // 보안상 가입 여부 외부 노출 안 함
     if (!user) {
-      return NextResponse.json({
-        success: true,
-        message: "이메일이 발송되었습니다.",
-      });
+      return ok(undefined, "비밀번호 재설정 링크를 이메일로 발송했습니다.");
     }
 
     const token = await createPasswordResetToken(user.id);
-    await sendPasswordResetEmail(email, user.name, token);
+    await sendPasswordResetEmail(user.email, user.name, token);
 
-    return NextResponse.json({
-      success: true,
-      message: "비밀번호 재설정 링크를 이메일로 발송했습니다.",
-    });
+    return ok(undefined, "비밀번호 재설정 링크를 이메일로 발송했습니다.");
   } catch (error) {
-    console.error("[비밀번호 재설정 요청 오류]", error);
-    return NextResponse.json(
-      { success: false, message: "서버 오류가 발생했습니다." },
-      { status: 500 }
-    );
+    return serverError("비밀번호 재설정 요청 오류", error);
   }
 }

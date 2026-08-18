@@ -1,13 +1,16 @@
 import Link from "next/link";
 
-// ====================================
-// 404 페이지
-// 존재하지 않는 페이지 접근 시 표시
-// ====================================
+// ============================================================
+// 404 화면 (없는 주소로 들어왔을 때)
+//
+// [비개발자 설명]
+// 삭제된 기사나 잘못된 주소로 접속하면 이 화면이 보입니다.
+// 사용자가 막히지 않도록 홈으로 가는 버튼을 함께 놓았습니다.
+// ============================================================
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+    <div className="min-h-[60vh] flex items-center justify-center px-4 py-16">
       <div className="text-center">
         <p className="text-8xl font-black text-gray-100 mb-4">404</p>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">

@@ -2,135 +2,105 @@ import bcrypt from "bcryptjs";
 import prisma from "@/backend/lib/db";
 import { Role } from "@prisma/client";
 
-// ====================================
-// 사용자 관련 비즈니스 로직
-// 회원가입, 로그인 검증, 사용자 조회 등
-// ====================================
+// ============================================================
+// 회원 관련 처리 (가입 / 로그인 검증 / 조회)
+//
+// [비개발자 설명]
+// 비밀번호는 절대 원문 그대로 저장하지 않습니다.
+// bcrypt 라는 방식으로 뒤섞어(해시) 저장하기 때문에,
+// 설령 데이터베이스가 통째로 유출되어도 원래 비밀번호를 알 수 없습니다.
+// 로그인할 때는 입력값을 같은 방식으로 뒤섞어 비교합니다.
+// ============================================================
 
-// 비밀번호 해시 복잡도 (높을수록 보안 강하지만 느림)
+/** 비밀번호를 뒤섞는 강도 (숫자가 클수록 안전하지만 느려집니다) */
 const SALT_ROUNDS = 12;
 
-/**
- * 이메일로 사용자 조회
- * 로그인 시 사용자 존재 여부 확인에 사용
- *
- * @param email - 조회할 이메일 주소
- * @returns 사용자 정보 또는 null
- */
+/** 화면에 돌려줘도 안전한 항목들 (비밀번호는 절대 포함하지 않음) */
+const PUBLIC_FIELDS = {
+  id: true,
+  email: true,
+  name: true,
+  role: true,
+  createdAt: true,
+} as const;
+
+/** 이메일로 회원 찾기 (비밀번호 포함 - 서버 내부 검증용) */
 export async function findUserByEmail(email: string) {
-  return prisma.user.findUnique({
-    where: { email },
-  });
+  return prisma.user.findUnique({ where: { email } });
 }
 
-/**
- * ID로 사용자 조회
- * 토큰 검증 후 사용자 정보 가져올 때 사용
- *
- * @param id - 사용자 ID
- * @returns 비밀번호 제외한 사용자 정보 또는 null
- */
+/** 회원 번호로 찾기 (비밀번호 제외 - 화면에 전달해도 안전) */
 export async function findUserById(id: number) {
   return prisma.user.findUnique({
     where: { id },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      role: true,
-      createdAt: true,
-    },
+    select: PUBLIC_FIELDS,
   });
 }
 
 /**
- * 회원가입 처리
- * 이메일 중복 확인 후 비밀번호 해시화하여 저장
- *
- * @param email - 이메일 주소
- * @param password - 평문 비밀번호 (해시화 후 저장)
- * @param name - 사용자 이름
- * @returns 생성된 사용자 정보 (비밀번호 제외)
+ * 회원가입
+ * 이메일이 이미 있으면 오류를 발생시키고, 없으면 비밀번호를 뒤섞어 저장합니다.
+ * 새 계정은 항상 일반 회원(USER) 등급으로 만들어집니다.
  */
 export async function createUser(email: string, password: string, name: string) {
-  // 이메일 중복 확인
   const existingUser = await findUserByEmail(email);
   if (existingUser) {
     throw new Error("이미 사용 중인 이메일입니다.");
   }
 
-  // 비밀번호 해시화 (원문 비밀번호는 DB에 저장하지 않음)
   const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
-  // 사용자 생성
-  const user = await prisma.user.create({
-    data: {
-      email,
-      password: hashedPassword,
-      name,
-      role: Role.USER,
-    },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      role: true,
-      createdAt: true,
-    },
+  return prisma.user.create({
+    data: { email, password: hashedPassword, name, role: Role.USER },
+    select: PUBLIC_FIELDS,
   });
-
-  return user;
 }
 
 /**
  * 로그인 검증
- * 이메일로 사용자 찾고 비밀번호 일치 여부 확인
- * emailVerified 여부도 함께 반환 (로그인 라우트에서 체크)
+ * 이메일 또는 이름(아이디) 중 아무거나 입력해도 로그인할 수 있습니다.
  *
- * @param email - 로그인 이메일
- * @param password - 입력한 평문 비밀번호
- * @returns 사용자 정보(emailVerified 포함) 또는 null (로그인 실패)
+ * @returns 비밀번호를 뺀 회원 정보, 로그인 실패 시 null
  */
-export async function validateLogin(email: string, password: string) {
-  // 이메일 또는 이름으로 사용자 조회
-  let user = await findUserByEmail(email);
-  if (!user) {
-    user = await prisma.user.findFirst({ where: { name: email } });
-  }
+export async function validateLogin(emailOrName: string, password: string) {
+  const input = emailOrName.trim();
+
+  // 1) 이메일로 먼저 찾고, 없으면 2) 이름으로 찾습니다.
+  const user =
+    (await findUserByEmail(input)) ??
+    (await prisma.user.findFirst({ where: { name: input } }));
+
   if (!user) return null;
 
-  // 입력한 비밀번호와 해시된 비밀번호 비교
+  // 입력한 비밀번호를 같은 방식으로 뒤섞어 저장된 값과 비교
   const isPasswordValid = await bcrypt.compare(password, user.password);
   if (!isPasswordValid) return null;
 
-  // 비밀번호 필드 제외하고 반환 (emailVerified 포함)
-  const { password: _, ...userWithoutPassword } = user;
+  // 비밀번호 항목만 빼고 나머지를 돌려줍니다. (이메일 인증 여부 포함)
+  const { password: _hashedPassword, ...userWithoutPassword } = user;
+  void _hashedPassword;
   return userWithoutPassword;
 }
 
 /**
- * 입력값 유효성 검증
+ * 가입 입력값 검사
  *
- * @param email - 이메일
- * @param password - 비밀번호
- * @param name - 이름 (회원가입 시)
- * @returns 에러 메시지 배열
+ * @param name 회원가입일 때만 전달 (로그인 검증에는 생략)
+ * @returns 문제가 있으면 안내문 목록, 없으면 빈 배열
  */
 export function validateUserInput(email: string, password: string, name?: string): string[] {
   const errors: string[] = [];
 
-  // 이메일 형식 검증
+  // 이메일 형식 검사 (@ 와 도메인이 있는지)
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!email || !emailRegex.test(email)) {
     errors.push("올바른 이메일 형식을 입력해주세요.");
   }
 
-  // 비밀번호 길이 검증 (최소 8자)
   if (!password || password.length < 8) {
     errors.push("비밀번호는 최소 8자 이상이어야 합니다.");
   }
 
-  // 이름 검증 (회원가입 시에만)
   if (name !== undefined && (!name || name.trim().length < 2)) {
     errors.push("이름은 최소 2자 이상이어야 합니다.");
   }

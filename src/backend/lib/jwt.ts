@@ -1,16 +1,25 @@
 import { SignJWT, jwtVerify } from "jose";
 
-// ====================================
-// JWT 토큰 유틸리티
-// 로그인 시 토큰 발급, 요청 시 토큰 검증
-// ====================================
+// ============================================================
+// 로그인 토큰(JWT) 만들기 / 검사하기
+//
+// [비개발자 설명]
+// 로그인에 성공하면 서버가 "이 사람은 홍길동이고 관리자입니다"라는
+// 내용이 담긴 위조 불가능한 출입증(토큰)을 발급합니다.
+// 이후 요청마다 브라우저가 이 출입증을 함께 보내고,
+// 서버는 서명을 확인해 진짜인지 검사합니다.
+// 서명에 쓰이는 열쇠(JWT_SECRET)는 .env 파일에 보관합니다.
+// ============================================================
 
-// JWT 서명에 사용할 비밀 키 (환경변수에서 가져옴)
+// 출입증 서명에 사용할 비밀 열쇠 (반드시 .env 에 설정해야 합니다)
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || "fallback-secret-key-change-this"
 );
 
-// JWT 페이로드 타입 정의
+// 출입증 유효기간 (기본 7일). 예) "7d", "24h", "60m"
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
+
+/** 출입증에 담기는 사용자 정보 */
 export interface JWTPayload {
   userId: number;
   email: string;
@@ -19,52 +28,31 @@ export interface JWTPayload {
 }
 
 /**
- * JWT 토큰 생성
- * 로그인 성공 시 사용자 정보를 담은 토큰 발급
+ * 출입증 발급 — 로그인 성공 시 호출합니다.
  *
- * @param payload - 토큰에 담을 사용자 정보
- * @returns 서명된 JWT 토큰 문자열
+ * @param payload 출입증에 담을 사용자 정보
+ * @returns 서명된 토큰 문자열
  */
 export async function signToken(payload: JWTPayload): Promise<string> {
-  const expiresIn = process.env.JWT_EXPIRES_IN || "7d";
-
-  // 만료 시간 파싱 (예: "7d" → 7일, "24h" → 24시간)
-  const expirationTime = parseExpiresIn(expiresIn);
-
-  const token = await new SignJWT({ ...payload })
+  return new SignJWT({ ...payload })
     .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()                              // 발급 시간 설정
-    .setExpirationTime(expirationTime)          // 만료 시간 설정
+    .setIssuedAt()                        // 발급 시각 기록
+    .setExpirationTime(JWT_EXPIRES_IN)    // 만료 시각 설정
     .sign(JWT_SECRET);
-
-  return token;
 }
 
 /**
- * JWT 토큰 검증
- * 요청 헤더나 쿠키의 토큰을 검증하고 사용자 정보 반환
+ * 출입증 검사 — 위조되었거나 기간이 지났으면 null 을 돌려줍니다.
  *
- * @param token - 검증할 JWT 토큰
- * @returns 토큰 내 사용자 정보 또는 null (검증 실패 시)
+ * @param token 검사할 토큰 문자열
+ * @returns 사용자 정보 또는 null
  */
 export async function verifyToken(token: string): Promise<JWTPayload | null> {
   try {
     const { payload } = await jwtVerify(token, JWT_SECRET);
     return payload as unknown as JWTPayload;
   } catch {
-    // 토큰이 만료되었거나 유효하지 않은 경우
+    // 만료되었거나 서명이 맞지 않는 경우
     return null;
   }
-}
-
-/**
- * 만료 시간 문자열 파싱
- * "7d", "24h", "60m" 형식을 파싱하여 초 단위로 반환
- *
- * @param expiresIn - 만료 시간 문자열
- * @returns 현재 시간 기준 만료 시각
- */
-function parseExpiresIn(expiresIn: string): string {
-  // jose 라이브러리 형식에 맞게 그대로 반환
-  return expiresIn;
 }

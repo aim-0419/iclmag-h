@@ -1,45 +1,38 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { findUserByEmail } from "@/backend/services/userService";
 import { createVerificationToken } from "@/backend/services/verificationService";
 import { sendVerificationEmail } from "@/backend/lib/email";
+import { fail, ok, serverError } from "@/backend/lib/apiResponse";
 
-// ====================================
-// 인증 코드 재발송 API
-// POST /api/auth/resend-verification
-// ====================================
+// ============================================================
+// 인증 코드 재발송 API   POST /api/auth/resend-verification
+//
+// [비개발자 설명]
+// 인증 메일을 못 받았거나 10분이 지나 코드가 만료됐을 때
+// 새 코드를 다시 보내줍니다. (이전 코드는 자동으로 무효가 됩니다)
+//
+// 가입되지 않은 이메일이나 이미 인증된 계정에도 똑같이
+// "발송 완료"라고 답합니다. 그래야 외부인이 이 주소를 이용해
+// 어떤 이메일이 가입돼 있는지 알아낼 수 없습니다.
+// ============================================================
 
-/**
- * 이메일 인증 코드 재발송
- * 이미 인증된 계정이면 무시
- */
 export async function POST(request: NextRequest) {
   try {
     const { email } = await request.json();
+    if (!email) return fail("이메일을 입력해주세요.");
 
-    if (!email) {
-      return NextResponse.json(
-        { success: false, message: "이메일을 입력해주세요." },
-        { status: 400 }
-      );
-    }
+    const user = await findUserByEmail(email.trim());
 
-    const user = await findUserByEmail(email);
-
-    // 보안상 사용자 존재 여부를 외부에 노출하지 않음
+    // 보안상 실제 결과를 숨깁니다.
     if (!user || user.emailVerified) {
-      return NextResponse.json({ success: true, message: "발송 완료" });
+      return ok(undefined, "인증 코드를 발송했습니다.");
     }
 
-    // 새 코드 발급 후 발송
     const code = await createVerificationToken(user.id);
-    await sendVerificationEmail(email, user.name, code);
+    await sendVerificationEmail(user.email, user.name, code);
 
-    return NextResponse.json({ success: true, message: "인증 코드를 재발송했습니다." });
+    return ok(undefined, "인증 코드를 재발송했습니다.");
   } catch (error) {
-    console.error("[인증 코드 재발송 오류]", error);
-    return NextResponse.json(
-      { success: false, message: "서버 오류가 발생했습니다." },
-      { status: 500 }
-    );
+    return serverError("인증 코드 재발송 오류", error);
   }
 }

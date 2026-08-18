@@ -1,78 +1,43 @@
-import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/backend/middleware/auth";
-import prisma from "@/backend/lib/db";
+import { NextRequest } from "next/server";
 import bcrypt from "bcryptjs";
+import prisma from "@/backend/lib/db";
+import { getAuthUser } from "@/backend/middleware/auth";
+import { fail, notFound, ok, serverError, unauthorized } from "@/backend/lib/apiResponse";
 
-// ====================================
-// 회원탈퇴 API
-// DELETE /api/user/delete
-// 비밀번호 확인 후 계정 삭제
-// ====================================
+// ============================================================
+// 회원탈퇴 API   DELETE /api/user/delete
+//
+// [비개발자 설명]
+// 마이페이지에서 탈퇴를 신청하면 실행됩니다.
+// 비밀번호를 한 번 더 확인한 뒤 계정을 영구 삭제하며,
+// 그 사람이 쓴 기사도 함께 삭제됩니다. (되돌릴 수 없습니다)
+// 삭제 후에는 브라우저에 남은 로그인 출입증도 즉시 지웁니다.
+// ============================================================
 
-/**
- * 회원탈퇴 처리
- * 비밀번호 재확인 후 계정 영구 삭제
- * 작성한 기사는 onDelete: Cascade로 함께 삭제됨
- */
 export async function DELETE(request: NextRequest) {
-  // 로그인 여부 확인
-  const authResult = await requireAuth(request);
-  if (!authResult) {
-    return NextResponse.json(
-      { success: false, message: "로그인이 필요합니다." },
-      { status: 401 }
-    );
-  }
+  const user = await getAuthUser(request);
+  if (!user) return unauthorized();
 
   try {
-    const body = await request.json();
-    const { password } = body;
+    const { password } = await request.json();
+    if (!password) return fail("비밀번호를 입력해주세요.");
 
-    if (!password) {
-      return NextResponse.json(
-        { success: false, message: "비밀번호를 입력해주세요." },
-        { status: 400 }
-      );
-    }
+    // 본인 확인
+    const dbUser = await prisma.user.findUnique({ where: { id: user.userId } });
+    if (!dbUser) return notFound("사용자를 찾을 수 없습니다.");
 
-    // 현재 비밀번호 확인
-    const user = await prisma.user.findUnique({ where: { id: authResult.userId } });
-    if (!user) {
-      return NextResponse.json(
-        { success: false, message: "사용자를 찾을 수 없습니다." },
-        { status: 404 }
-      );
-    }
+    const isPasswordValid = await bcrypt.compare(password, dbUser.password);
+    if (!isPasswordValid) return fail("비밀번호가 올바르지 않습니다.");
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return NextResponse.json(
-        { success: false, message: "비밀번호가 올바르지 않습니다." },
-        { status: 400 }
-      );
-    }
+    // 계정 삭제 (작성한 기사·인증 토큰은 DB 설정에 따라 함께 삭제됩니다)
+    await prisma.user.delete({ where: { id: user.userId } });
 
-    // 계정 삭제 (기사는 onDelete: Cascade로 자동 삭제)
-    await prisma.user.delete({ where: { id: authResult.userId } });
-
-    // 응답 생성 후 쿠키 만료 처리
-    const response = NextResponse.json({
-      success: true,
-      message: "회원탈퇴가 완료되었습니다.",
-    });
-
-    response.cookies.set("auth_token", "", {
-      httpOnly: true,
-      maxAge: 0,
-      path: "/",
-    });
+    // 로그인 출입증 쿠키 즉시 만료
+    const response = ok(undefined, "회원탈퇴가 완료되었습니다.");
+    response.cookies.set("auth_token", "", { httpOnly: true, maxAge: 0, path: "/" });
 
     return response;
   } catch (error) {
-    console.error("[회원탈퇴 오류]", error);
-    return NextResponse.json(
-      { success: false, message: "서버 오류가 발생했습니다." },
-      { status: 500 }
-    );
+    return serverError("회원탈퇴 오류", error);
   }
 }

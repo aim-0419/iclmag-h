@@ -1,45 +1,56 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Header from "@/frontend/components/layout/Header";
 import Footer from "@/frontend/components/layout/Footer";
+import { SITE } from "@/constants/site";
 
-// ====================================
-// 루트 레이아웃
-// 모든 페이지에서 공통으로 사용되는 레이아웃
-// 헤더, 푸터, 메타데이터 설정
-// ====================================
+// ============================================================
+// 전체 화면 공통 틀 (레이아웃)
+//
+// [비개발자 설명]
+// 어떤 페이지를 열어도 항상 같은 위치에 나오는 껍데기입니다.
+//   맨 위  : 헤더 (로고 · 로그인 · 카테고리 탭)
+//   가운데 : 각 페이지 내용
+//   맨 아래: 푸터 (약관 링크 · 회사 정보)
+// 브라우저 탭에 뜨는 제목과 검색엔진용 설명도 여기서 정합니다.
+// ============================================================
 
 export const metadata: Metadata = {
   title: {
-    default: "ICL MAG-H - 빠르고 정확한 뉴스",
-    template: "%s | ICL MAG-H",
+    default: SITE.title,
+    // 다른 페이지 제목 뒤에 자동으로 " | ICL MAG-H" 가 붙습니다.
+    template: `%s | ${SITE.shortName}`,
   },
-  description: "정치, 경제, 사회, 생활/문화, IT/과학, 세계 뉴스를 빠르고 정확하게 전달합니다.",
+  description: SITE.description,
   keywords: ["뉴스", "매거진", "정치", "경제", "사회", "IT", "세계"],
   openGraph: {
     type: "website",
     locale: "ko_KR",
-    siteName: "ICL MAG-H",
+    siteName: SITE.shortName,
+    title: SITE.title,
+    description: SITE.description,
   },
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+// 휴대폰에서 화면 크기에 맞춰 보이도록 하는 설정
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko">
-      <body>
-        {/* 헤더 (로고 + 카테고리 네비게이션) */}
+      {/*
+        flex 세로 배치 + main 의 flex-1 :
+        기사가 적어 내용이 짧은 페이지에서도 푸터가 화면 중간에 뜨지 않고
+        항상 화면 맨 아래에 붙습니다.
+      */}
+      <body className="min-h-screen flex flex-col overflow-x-hidden">
         <Header />
 
-        {/* 메인 콘텐츠 영역 */}
-        <main className="min-h-screen bg-surface">
-          {children}
-        </main>
+        <main className="flex-1 bg-surface">{children}</main>
 
-        {/* 푸터 */}
         <Footer />
       </body>
     </html>

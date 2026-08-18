@@ -1,14 +1,16 @@
+/* 구글 폰트 (Noto Sans KR) — @import 는 반드시 파일 맨 위에 있어야 합니다. */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ====================================
-   전역 스타일 설정
-   매거진 사이트 기본 디자인
-   ==================================== */
-
-/* 구글 폰트 (Noto Sans KR) */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+/* ============================================================
+   사이트 전역 스타일
+   [비개발자 설명]
+   모든 화면에 공통으로 적용되는 글꼴·색상·버튼 모양을 정의합니다.
+   여기서 한 번 정해두면 수십 개 화면에서 똑같이 사용할 수 있습니다.
+   ============================================================ */
 
 @layer base {
   html {
@@ -21,50 +23,57 @@
     @apply bg-surface text-gray-900;
   }
 
-  /* 링크 기본 스타일 제거 */
+  /* 링크의 기본 밑줄 제거 */
   a {
     @apply no-underline;
   }
 
-  /* 스크롤바 숨기기 (카테고리 네비게이션) */
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
+  /*
+    아주 긴 영문 단어나 주소가 상자 밖으로 삐져나가지 않도록
+    모든 글 요소에 기본 줄바꿈 규칙을 적용합니다.
+  */
+  h1, h2, h3, h4, h5, h6, p, span, li, td, th, label, a {
+    overflow-wrap: break-word;
   }
 }
 
 @layer components {
-  /* 기사 본문 스타일 */
+  /* 기사 본문 (줄바꿈 유지 + 한국어에 맞는 줄바꿈) */
   .article-content {
     @apply text-gray-800 leading-8 text-base;
-    white-space: pre-wrap;
-    word-break: keep-all;
+    white-space: pre-wrap;   /* 작성자가 넣은 줄바꿈을 그대로 표시 */
+    word-break: keep-all;    /* 한국어 단어를 중간에서 자르지 않음 */
+    overflow-wrap: anywhere; /* 단, 긴 영문 주소는 잘라서 화면을 넘지 않게 */
   }
 
-  /* 입력 필드 공통 스타일 */
+  /* 입력칸 공통 모양 */
   .input-field {
     @apply w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-900
            focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent
            transition-all duration-200;
   }
 
-  /* 버튼 공통 스타일 */
+  /* 강조 버튼 (빨간색) */
   .btn-primary {
     @apply bg-accent hover:bg-accent-hover text-white font-medium
            px-6 py-3 rounded-lg transition-colors duration-200
            disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
+  /* 보조 버튼 (테두리만) */
   .btn-secondary {
     @apply border border-gray-300 text-gray-700 hover:bg-gray-50
            font-medium px-6 py-3 rounded-lg transition-colors duration-200;
   }
+}
 
-  /* 섹션 구분선 */
-  .section-divider {
-    @apply border-b-2 border-primary mb-6 pb-2;
+@layer utilities {
+  /* 가로 스크롤은 되지만 스크롤바는 보이지 않게 (카테고리 탭·정책 탭에서 사용) */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 }

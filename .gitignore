@@ -22,6 +22,7 @@ public/uploads/
 # 캐시
 .eslintcache
 .swc/
+tsconfig.tsbuildinfo
 
 # 로그
 npm-debug.log*

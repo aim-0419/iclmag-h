@@ -1,5 +1,14 @@
-// Prisma 스키마 파일
-// MySQL 데이터베이스와 연결하여 User, Article 테이블을 관리
+// ============================================================
+// 데이터베이스 설계도 (Prisma 스키마)
+//
+// [비개발자 설명]
+// 회원·기사 정보를 어떤 항목으로 저장할지 적어둔 표의 설계도입니다.
+// 여기를 고친 뒤 `npm run db:push` 를 실행하면
+// 실제 데이터베이스의 표 구조가 이 내용대로 맞춰집니다.
+//
+// 항목을 지우거나 이름을 바꾸면 기존 데이터가 사라질 수 있으니
+// 운영 중인 사이트에서는 반드시 백업 후 진행하세요.
+// ============================================================
 
 generator client {
   provider = "prisma-client-js"
@@ -14,9 +23,9 @@ datasource db {
 // 사용자 역할 (권한 구분)
 // ====================================
 enum Role {
-  USER    // 일반 회원
-  WRITER  // 기자/작성자
-  ADMIN   // 관리자
+  USER    // 일반 회원 (기사 읽기만 가능)
+  WRITER  // 기자 계정용으로 미리 만들어 둔 등급. 현재 권한은 USER와 동일합니다.
+  ADMIN   // 관리자 (기사 작성·수정·삭제, 이미지 업로드 가능)
 }
 
 // ====================================
@@ -64,14 +73,14 @@ model User {
 
 // ====================================
 // 이메일 인증 토큰 테이블
-// 회원가입 시 발급, 인증 완료 후 삭제
+// 회원가입 시 6자리 코드 발급 → 인증 완료 시 삭제
 // ====================================
 model VerificationToken {
   id        Int      @id @default(autoincrement())
-  token     String   @unique            // 랜덤 UUID 토큰
+  token     String   @unique            // 6자리 인증 코드
   userId    Int                         // 대상 사용자
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt DateTime                    // 만료 시각 (발급 후 24시간)
+  expiresAt DateTime                    // 만료 시각 (발급 후 10분)
   createdAt DateTime @default(now())
 
   @@map("verification_tokens")

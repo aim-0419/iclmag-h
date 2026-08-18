@@ -1,24 +1,32 @@
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/backend/lib/db";
+import { NextRequest } from "next/server";
+import prisma from "@/backend/lib/db";
+import { fail, notFound, serverError } from "@/backend/lib/apiResponse";
 
-// ====================================
-// 아이디(이메일) 찾기 API
-// POST /api/auth/find-email
-// ====================================
+// ============================================================
+// 아이디(이메일) 찾기 API   POST /api/auth/find-email
+//
+// [비개발자 설명]
+// 가입할 때 쓴 이름으로 이메일을 찾아줍니다.
+// 단, 이메일을 통째로 보여주면 남의 주소가 노출되므로
+// 앞 3글자만 남기고 나머지는 별표로 가려서 알려줍니다.
+//   예) hong1234@gmail.com  →  hon*****@gmail.com
+// ============================================================
 
-/**
- * 이름으로 가입된 이메일 조회
- * 보안상 이메일 일부만 마스킹하여 반환
- */
+/** 이메일 앞부분을 가려서 돌려줍니다. */
+function maskEmail(email: string): string {
+  const [localPart, domain] = email.split("@");
+  const visible = localPart.slice(0, 3);
+  // 최소 2개는 가려서 원래 길이를 짐작하기 어렵게 합니다.
+  const hidden = "*".repeat(Math.max(localPart.length - 3, 2));
+  return `${visible}${hidden}@${domain}`;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { name } = await request.json();
 
     if (!name || name.trim().length < 2) {
-      return NextResponse.json(
-        { success: false, message: "이름을 2자 이상 입력해주세요." },
-        { status: 400 }
-      );
+      return fail("이름을 2자 이상 입력해주세요.");
     }
 
     const users = await prisma.user.findMany({
@@ -27,29 +35,17 @@ export async function POST(request: NextRequest) {
     });
 
     if (users.length === 0) {
-      return NextResponse.json(
-        { success: false, message: "해당 이름으로 가입된 계정이 없습니다." },
-        { status: 404 }
-      );
+      return notFound("해당 이름으로 가입된 계정이 없습니다.");
     }
 
-    // 이메일 마스킹 처리 (앞 3자리 + **** + @ + 도메인)
-    const maskedEmails = users.map((u) => {
-      const [local, domain] = u.email.split("@");
-      const visible = local.slice(0, 3);
-      const masked = visible + "*".repeat(Math.max(local.length - 3, 2));
-      return {
-        email: `${masked}@${domain}`,
-        createdAt: u.createdAt.toLocaleDateString("ko-KR"),
-      };
-    });
+    const accounts = users.map((user) => ({
+      email: maskEmail(user.email),
+      createdAt: user.createdAt.toLocaleDateString("ko-KR"),
+    }));
 
-    return NextResponse.json({ success: true, accounts: maskedEmails });
+    // 화면(FindEmailModal)이 accounts 키로 읽고 있어 형태를 그대로 유지합니다.
+    return Response.json({ success: true, accounts });
   } catch (error) {
-    console.error("[아이디 찾기 오류]", error);
-    return NextResponse.json(
-      { success: false, message: "서버 오류가 발생했습니다." },
-      { status: 500 }
-    );
+    return serverError("아이디 찾기 오류", error);
   }
 }

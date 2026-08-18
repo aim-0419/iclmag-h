@@ -1,30 +1,40 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Alert from "@/frontend/components/ui/Alert";
 
-// ====================================
-// 회원가입 페이지
-// 일반 사용자는 role 입력 없이 USER 권한으로 가입됨
-// ====================================
+// ============================================================
+// 회원가입 화면 (주소: /register )
+//
+// [비개발자 설명]
+// 이름·이메일·비밀번호를 받아 계정을 만듭니다.
+// 가입에 성공하면 곧바로 "이메일 인증" 화면으로 넘어가고,
+// 메일로 받은 6자리 코드를 입력해야 로그인할 수 있습니다.
+//
+// ※ 예전에는 가입 후 "메일의 인증 링크를 누르세요"라고 안내했지만
+//    실제 메일에는 링크가 아니라 코드가 들어 있어 안내가 어긋났습니다.
+// ============================================================
 
 export default function RegisterPage() {
+  const router = useRouter();
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+
+  const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMessage("");
-    setError("");
+    setErrorMessage("");
 
+    // 두 비밀번호 칸이 서로 다르면 서버에 보내기 전에 걸러냅니다.
     if (password !== passwordConfirm) {
-      setError("비밀번호가 일치하지 않습니다.");
+      setErrorMessage("비밀번호가 일치하지 않습니다.");
       return;
     }
 
@@ -44,22 +54,23 @@ export default function RegisterPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.message || data.errors?.[0] || "회원가입에 실패했습니다.");
+        setErrorMessage(data.message || data.errors?.[0] || "회원가입에 실패했습니다.");
         return;
       }
 
-      setIsSuccess(true);
-      setMessage(data.message || "회원가입이 완료되었습니다. 이메일 인증 후 로그인해주세요.");
+      // 가입 성공 → 인증 코드 입력 화면으로 이동 (이메일을 미리 채워서 전달)
+      router.push(`/verify-email?email=${encodeURIComponent(email.trim())}`);
     } catch {
-      setError("서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+      setErrorMessage("서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-surface flex items-center justify-center px-4">
+    <div className="min-h-[70vh] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
+        {/* 로고 */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-1">
             <span className="text-accent font-black text-3xl">ICL</span>
@@ -68,97 +79,89 @@ export default function RegisterPage() {
           <p className="text-gray-500 text-sm mt-2">회원가입 후 이메일 인증을 완료해주세요</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-6">회원가입</h1>
 
-          {message && (
-            <div className="bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg px-4 py-3 mb-5">
-              {message}
+          <Alert tone="error" className="mb-5">
+            {errorMessage}
+          </Alert>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="register-name" className="block text-sm font-medium text-gray-700 mb-1">
+                이름
+              </label>
+              <input
+                id="register-name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="이름을 입력하세요"
+                required
+                minLength={2}
+                maxLength={50}
+                className="input-field"
+                autoComplete="name"
+              />
             </div>
-          )}
 
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3 mb-5">
-              {error}
+            <div>
+              <label htmlFor="register-email" className="block text-sm font-medium text-gray-700 mb-1">
+                이메일
+              </label>
+              <input
+                id="register-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="이메일을 입력하세요"
+                required
+                className="input-field"
+                autoComplete="email"
+              />
             </div>
-          )}
 
-          {isSuccess ? (
-            <div className="space-y-4">
-              <Link href="/login" className="block w-full btn-primary text-center">
-                로그인으로 이동
-              </Link>
-              <p className="text-xs text-gray-400 text-center">
-                메일함에서 인증 링크를 확인한 뒤 로그인할 수 있습니다.
-              </p>
+            <div>
+              <label htmlFor="register-password" className="block text-sm font-medium text-gray-700 mb-1">
+                비밀번호
+              </label>
+              <input
+                id="register-password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="8자 이상 입력"
+                required
+                minLength={8}
+                className="input-field"
+                autoComplete="new-password"
+              />
             </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">이름</label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="이름을 입력하세요"
-                  required
-                  minLength={2}
-                  maxLength={50}
-                  className="input-field"
-                  autoComplete="name"
-                />
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">이메일</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="이메일을 입력하세요"
-                  required
-                  className="input-field"
-                  autoComplete="email"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">비밀번호</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="8자 이상 입력"
-                  required
-                  minLength={8}
-                  className="input-field"
-                  autoComplete="new-password"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">비밀번호 확인</label>
-                <input
-                  type="password"
-                  value={passwordConfirm}
-                  onChange={(e) => setPasswordConfirm(e.target.value)}
-                  placeholder="비밀번호를 다시 입력"
-                  required
-                  minLength={8}
-                  className="input-field"
-                  autoComplete="new-password"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full btn-primary mt-2"
+            <div>
+              <label
+                htmlFor="register-password-confirm"
+                className="block text-sm font-medium text-gray-700 mb-1"
               >
-                {isLoading ? "가입 처리 중..." : "회원가입"}
-              </button>
-            </form>
-          )}
+                비밀번호 확인
+              </label>
+              <input
+                id="register-password-confirm"
+                type="password"
+                value={passwordConfirm}
+                onChange={(e) => setPasswordConfirm(e.target.value)}
+                placeholder="비밀번호를 다시 입력"
+                required
+                minLength={8}
+                className="input-field"
+                autoComplete="new-password"
+              />
+            </div>
+
+            <button type="submit" disabled={isLoading} className="w-full btn-primary mt-2">
+              {isLoading ? "가입 처리 중..." : "회원가입"}
+            </button>
+          </form>
 
           <div className="text-center mt-5 text-sm text-gray-500">
             이미 계정이 있으신가요?{" "}
